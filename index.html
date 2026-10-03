@@ -2,168 +2,86 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Dado 3D para jogos de tabuleiro">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Dado 3D para jogos de tabuleiro: d4, d6, d8, d10, d12 e d20.">
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Dice">
+    <title>Dice</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
-    <title>Dice</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/app.css">
 </head>
-<body class="bg-slate-900 text-white font-sans antialiased overscroll-none">
-    <div id="app" class="min-h-[100dvh] flex flex-col">
-        
-        <!-- Install Prompt (Android) -->
-        <div id="installPrompt" class="hidden fixed top-4 left-4 right-4 z-50 max-w-sm mx-auto">
-            <div class="bg-slate-800 rounded-2xl p-4 shadow-2xl border border-slate-700 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="4" y="4" width="16" height="16" rx="2"/>
-                        <circle cx="8" cy="8" r="1" fill="currentColor"/>
-                        <circle cx="16" cy="16" r="1" fill="currentColor"/>
-                    </svg>
-                </div>
-                <p class="flex-1 text-sm">Adicionar à tela inicial</p>
-                <button id="installBtn" class="px-3 py-1.5 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium transition-colors">
-                    Instalar
-                </button>
-                <button id="closeInstall" class="p-1 text-slate-400 hover:text-white" aria-label="Fechar">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
+<body class="bg-slate-950 font-sans text-white antialiased">
+    <div class="relative mx-auto flex h-[100dvh] max-w-md flex-col px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))]">
 
-        <!-- iOS Install Hint -->
-        <div id="iosPrompt" class="hidden fixed top-4 left-4 right-4 z-50 max-w-sm mx-auto">
-            <div class="bg-slate-800 rounded-2xl p-4 shadow-2xl border border-slate-700 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="4" y="4" width="16" height="16" rx="2"/>
-                        <circle cx="12" cy="12" r="1" fill="currentColor"/>
-                    </svg>
-                </div>
-                <p class="flex-1 text-xs text-slate-300">
-                    Toque em
-                    <svg class="w-4 h-4 inline align-text-bottom mx-0.5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2l3.5 3.5-1.41 1.41L13 5.83V16h-2V5.83L9.91 6.91 8.5 5.5 12 2zm7 18H5v-2h14v2z"/>
-                    </svg>
-                    e <span class="text-white font-medium">Adicionar à Tela de Início</span>
-                </p>
-                <button id="closeIos" class="p-1 text-slate-400 hover:text-white" aria-label="Fechar">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <!-- Header -->
-        <header class="flex-shrink-0 px-5 pt-6 pb-4">
-            <div class="flex items-center justify-center gap-2">
-                <svg class="w-6 h-6 text-violet-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="18" height="18" rx="3"/>
-                    <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
-                    <circle cx="16" cy="8" r="1.5" fill="currentColor"/>
-                    <circle cx="8" cy="16" r="1.5" fill="currentColor"/>
-                    <circle cx="16" cy="16" r="1.5" fill="currentColor"/>
-                    <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+        <div id="install-android" class="install-chip absolute inset-x-3 top-3 z-50 hidden">
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-700 bg-slate-900/95 px-3 py-2.5 shadow-2xl backdrop-blur">
+                <svg class="h-8 w-8 shrink-0 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                    <rect x="4" y="4" width="16" height="16" rx="3"/>
+                    <circle cx="8.5" cy="8.5" r="1.1" fill="currentColor" stroke="none"/>
+                    <circle cx="15.5" cy="15.5" r="1.1" fill="currentColor" stroke="none"/>
                 </svg>
-                <h1 class="text-xl font-semibold">Dice</h1>
+                <p class="min-w-0 flex-1 text-sm leading-tight">Adicionar à tela inicial</p>
+                <button id="install-accept" type="button" class="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-semibold">Instalar</button>
+                <button id="install-close" type="button" class="p-1 text-slate-400" aria-label="Fechar">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
             </div>
+        </div>
+
+        <div id="install-ios" class="install-chip absolute inset-x-3 top-3 z-50 hidden">
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-700 bg-slate-900/95 px-3 py-2.5 shadow-2xl backdrop-blur">
+                <svg class="h-8 w-8 shrink-0 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v10m0-10l-3.5 3.5M12 3l3.5 3.5M5 21h14v-2H5v2z"/>
+                </svg>
+                <p class="min-w-0 flex-1 text-xs leading-snug text-slate-300">No Safari, toque em compartilhar e em Adicionar à Tela de Início.</p>
+                <button id="ios-close" type="button" class="p-1 text-slate-400" aria-label="Fechar">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <header class="flex items-center justify-center gap-2 pb-4 pt-2">
+            <svg class="h-6 w-6 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="3"/>
+                <circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"/>
+                <circle cx="16" cy="8" r="1.2" fill="currentColor" stroke="none"/>
+                <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+                <circle cx="8" cy="16" r="1.2" fill="currentColor" stroke="none"/>
+                <circle cx="16" cy="16" r="1.2" fill="currentColor" stroke="none"/>
+            </svg>
+            <h1 class="text-lg font-semibold tracking-tight">Dice</h1>
         </header>
 
-        <!-- Dice Type Selector -->
-        <nav class="flex-shrink-0 px-5 pb-5">
-            <div class="bg-slate-800/50 rounded-2xl p-1.5 flex gap-1">
-                <button class="dice-type active" data-sides="4">D4</button>
-                <button class="dice-type" data-sides="6">D6</button>
-                <button class="dice-type" data-sides="8">D8</button>
-                <button class="dice-type" data-sides="10">D10</button>
-                <button class="dice-type" data-sides="12">D12</button>
-                <button class="dice-type" data-sides="20">D20</button>
-            </div>
-        </nav>
+        <div class="die-picker mb-3" role="radiogroup" aria-label="Tipo de dado">
+            <button type="button" role="radio" data-sides="4" aria-checked="false">D4</button>
+            <button type="button" role="radio" class="is-selected" data-sides="6" aria-checked="true">D6</button>
+            <button type="button" role="radio" data-sides="8" aria-checked="false">D8</button>
+            <button type="button" role="radio" data-sides="10" aria-checked="false">D10</button>
+            <button type="button" role="radio" data-sides="12" aria-checked="false">D12</button>
+            <button type="button" role="radio" data-sides="20" aria-checked="false">D20</button>
+        </div>
 
-        <!-- 3D Dice Canvas -->
-        <main class="flex-1 px-5 pb-5 min-h-0">
-            <div id="diceContainer" class="h-full rounded-3xl bg-gradient-to-b from-slate-800/30 to-slate-900/50 border border-slate-700/50 relative overflow-hidden cursor-pointer active:scale-[0.99] transition-transform">
-                <canvas id="diceCanvas" class="w-full h-full"></canvas>
-                
-                <!-- Result Display -->
-                <div id="resultDisplay" class="absolute bottom-6 left-0 right-0 flex flex-col items-center pointer-events-none">
-                    <div id="resultValue" class="text-6xl font-bold text-white drop-shadow-lg opacity-0 transition-opacity duration-300"></div>
-                </div>
-                
-                <!-- Tap Hint -->
-                <div id="tapHint" class="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-2 text-slate-400 text-sm transition-opacity duration-300">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59"/>
-                    </svg>
-                    <span>Toque para rolar</span>
-                </div>
-            </div>
-        </main>
+        <p id="hint" class="pb-3 text-center text-sm text-slate-400">Toque no dado para rolar</p>
+
+        <button id="stage" type="button" class="stage min-h-0 flex-1" aria-label="Rolar dado">
+            <canvas id="canvas"></canvas>
+        </button>
     </div>
-
-    <style>
-        .dice-type {
-            flex: 1;
-            padding: 0.75rem 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #94a3b8;
-            background: transparent;
-            border: none;
-            border-radius: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .dice-type:active {
-            transform: scale(0.95);
-        }
-        .dice-type.active {
-            background: #7c3aed;
-            color: white;
-            box-shadow: 0 4px 15px -3px rgba(124, 58, 237, 0.5);
-        }
-        
-        #diceCanvas {
-            touch-action: none;
-        }
-        
-        @keyframes roll-bounce {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-    </style>
 
     <script type="importmap">
     {
         "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
         }
     }
     </script>
-    <script type="module" src="script.js"></script>
+    <script type="module" src="js/app.js"></script>
 </body>
 </html>

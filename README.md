@@ -1,40 +1,26 @@
-# Dice - Dado 3D para Jogos de Tabuleiro
+# Dice
 
-Aplicativo web (PWA) com dados 3D para jogos de tabuleiro, RPG e outros jogos.
-
-## Recursos
-
-- **Dados 3D**: d4, d6, d8, d10, d12, d20 renderizados com Three.js
-- **Rolagem realista**: O dado gira em 3D e para na face sorteada
-- **Instalável**: Funciona como app nativo no celular
-- **Offline**: Funciona sem internet após primeiro acesso
-- **Mobile-first**: Interface otimizada para uso com uma mão
-
-## Acesso
+Dado 3D para jogos de tabuleiro. Funciona no celular, pode ser instalado e rola d4, d6, d8, d10, d12 e d20.
 
 **https://kayooliveira.github.io/dice/**
 
-## Instalação
-
-### Android (Chrome)
-1. Acesse o site
-2. Toque em "Instalar" no aviso que aparece
-3. O app será adicionado à tela inicial
-
-### iPhone/iPad (Safari)
-1. Acesse o site pelo Safari
-2. Toque no ícone de compartilhar
-3. Selecione "Adicionar à Tela de Início"
-
 ## Como usar
 
-1. Escolha o tipo de dado no seletor (D4 a D20)
-2. Toque na área do dado para rolar
-3. O dado gira e para mostrando o resultado
+1. Escolha o dado no seletor (D4 a D20).
+2. Toque no dado para rolar.
+3. O dado gira em 3D e para com a face sorteada de frente. O número está nessa face.
 
-## Tecnologias
+Cada face tem a mesma chance. O sorteio usa `crypto.getRandomValues`.
 
-- HTML, CSS (Tailwind), JavaScript
-- Three.js para renderização 3D
-- Service Worker para funcionamento offline
-- Web App Manifest para instalação como PWA
+## Instalar
+
+No Android, o aviso no topo oferece a instalação. No iPhone, use o Safari: compartilhar e Adicionar à Tela de Início. O aviso pode ser fechado.
+
+## Código
+
+- `index.html` — estrutura da página
+- `css/app.css` — estilos dos componentes
+- `js/app.js` — seleção do dado, toque e instalação
+- `js/dice.js` — geometria, materiais, luz e rolagem 3D
+
+Não há etapa de build. O GitHub Pages publica a raiz do branch `current`.
