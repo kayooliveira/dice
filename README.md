@@ -21,6 +21,9 @@ Acesse diretamente pelo navegador do seu celular:
 
 Funciona em qualquer navegador moderno, sem necessidade de instalação.
 
+> **Nota para o administrador:** Para publicar o site, habilite o GitHub Pages em:
+> Settings → Pages → Source: "GitHub Actions"
+
 ### Dica: Adicionar à tela inicial
 
 No seu celular, você pode adicionar o app à tela inicial para acesso rápido:
