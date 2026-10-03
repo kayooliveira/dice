@@ -1,14 +1,14 @@
 # Dice
 
-Dado 3D para jogos de tabuleiro. Funciona no celular, pode ser instalado e rola d4, d6, d8, d10, d12 e d20.
+Dado 3D para jogos de tabuleiro. Funciona no celular, pode ser instalado e rola d6, d8, d10, d12 e d20.
 
 **https://kayooliveira.github.io/dice/**
 
 ## Como usar
 
-1. Escolha o dado no seletor (D4 a D20).
+1. Escolha o dado no seletor (D6 a D20).
 2. Toque no dado para rolar.
-3. O dado gira em 3D e para com a face sorteada de frente. O número está nessa face.
+3. O dado gira e para com a face sorteada exatamente de frente para a tela. O número se lê nessa face.
 
 Cada face tem a mesma chance. O sorteio usa `crypto.getRandomValues`.
 

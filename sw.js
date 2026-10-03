@@ -1,4 +1,4 @@
-const CACHE = 'dice-v6';
+const CACHE = 'dice-v7';
 const ROOT = new URL('./', self.location);
 const URLS = [
     '',

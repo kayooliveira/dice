@@ -288,7 +288,6 @@ export function createDie(sides) {
     let group;
     if (sides === 6) group = buildD6();
     else if (sides === 10) group = buildD10();
-    else if (sides === 4) group = buildPolyhedron(4, new THREE.TetrahedronGeometry(1.35));
     else if (sides === 8) group = buildPolyhedron(8, new THREE.OctahedronGeometry(1.25));
     else if (sides === 12) group = buildPolyhedron(12, new THREE.DodecahedronGeometry(1.15));
     else if (sides === 20) group = buildPolyhedron(20, new THREE.IcosahedronGeometry(1.2));
@@ -307,16 +306,7 @@ export function createDie(sides) {
     return group;
 }
 
-const VIEW_TILT = {
-    4: [-0.4, 0.5],
-    6: [-0.46, 0.58],
-    8: [-0.2, 0.24],
-    10: [-0.08, 0.1],
-    12: [-0.06, 0.08],
-    20: [0, 0]
-};
-
-function alignedQuaternion(face) {
+export function quaternionForFace(face) {
     const normal = face.normal.clone().normalize();
     const align = new THREE.Quaternion().setFromUnitVectors(normal, FACING_TARGET);
     const up = face.up.clone().applyQuaternion(align);
@@ -329,34 +319,6 @@ function alignedQuaternion(face) {
     );
     const twist = new THREE.Quaternion().setFromAxisAngle(FACING_TARGET, angle);
     return twist.multiply(align);
-}
-
-export function quaternionForFace(face, sides = 6, allFaces = null) {
-    const aligned = alignedQuaternion(face);
-    const [pitch, yaw] = VIEW_TILT[sides] || [0, 0];
-    const tilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
-    if (sides !== 4 || !allFaces) return tilt.multiply(aligned);
-
-    let best = null;
-    let bestScore = -Infinity;
-    for (let step = 0; step < 72; step += 1) {
-        const twist = new THREE.Quaternion().setFromAxisAngle(FACING_TARGET, (step * Math.PI) / 36);
-        const q = tilt.clone().multiply(twist).multiply(aligned);
-        const targetDot = face.normal.clone().applyQuaternion(q).dot(FACING_TARGET);
-        let second = -Infinity;
-        for (const other of allFaces) {
-            if (other === face) continue;
-            second = Math.max(second, other.normal.clone().applyQuaternion(q).dot(FACING_TARGET));
-        }
-        const up = face.up.clone().applyQuaternion(q);
-        if (targetDot - second < 0.2 || up.y < 0.35) continue;
-        const score = second + up.y * 0.25;
-        if (score > bestScore) {
-            bestScore = score;
-            best = q;
-        }
-    }
-    return best || tilt.multiply(aligned);
 }
 
 export function facingValue(die, toward = FACING_TARGET) {
@@ -389,10 +351,8 @@ export class DiceView {
         this.canvas = canvas;
         this.sides = 6;
         this.rolling = false;
-        this.locked = false;
         this.die = null;
         this.baseQuaternion = new THREE.Quaternion();
-        this.clock = 0;
         this._frame = this._frame.bind(this);
 
         this.scene = new THREE.Scene();
@@ -461,9 +421,8 @@ export class DiceView {
         this.die = createDie(sides);
         this.scene.add(this.die);
         const first = this.die.userData.faces.find((face) => face.value === 1) || this.die.userData.faces[0];
-        this.baseQuaternion.copy(quaternionForFace(first, sides, this.die.userData.faces));
+        this.baseQuaternion.copy(quaternionForFace(first));
         this.die.quaternion.copy(this.baseQuaternion);
-        this.locked = false;
         this.rolling = false;
         this._fit();
     }
@@ -479,7 +438,7 @@ export class DiceView {
             ? (crypto.getRandomValues(new Uint32Array(1))[0] % faces) + 1
             : forcedValue;
         const face = this.die.userData.faces.find((item) => item.value === value);
-        const end = quaternionForFace(face, this.sides, this.die.userData.faces);
+        const end = quaternionForFace(face);
         const start = this.die.quaternion.clone();
         const axis = new THREE.Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 0.6 + 0.4).normalize();
         const turns = 2.2 + Math.random() * 1.6;
@@ -487,7 +446,6 @@ export class DiceView {
         const started = performance.now();
 
         this.rolling = true;
-        this.locked = true;
 
         return new Promise((resolve) => {
             const step = (now) => {
@@ -520,17 +478,8 @@ export class DiceView {
         });
     }
 
-    _frame(now = 0) {
+    _frame() {
         requestAnimationFrame(this._frame);
-        if (!this.rolling && !this.locked && this.die) {
-            this.clock = now * 0.001;
-            const rock = new THREE.Quaternion().setFromEuler(new THREE.Euler(
-                Math.sin(this.clock * 0.8) * 0.06,
-                Math.sin(this.clock * 0.55) * 0.1,
-                0
-            ));
-            this.die.quaternion.copy(rock).multiply(this.baseQuaternion);
-        }
         this.renderer.render(this.scene, this.camera);
     }
 }
