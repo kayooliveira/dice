@@ -1,13 +1,13 @@
 {
-  "name": "Dice - Dado Digital",
+  "name": "Dice",
   "short_name": "Dice",
-  "description": "Dado digital 3D para jogos de tabuleiro - d4, d6, d8, d10, d12, d20",
+  "description": "Dado 3D para jogos de tabuleiro",
   "start_url": "/dice/",
   "scope": "/dice/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#1a1a2e",
-  "theme_color": "#1a1a2e",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
   "icons": [
     {
       "src": "icons/icon-72.png",
