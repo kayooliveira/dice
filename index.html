@@ -2,10 +2,15 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="Dado digital para jogos de tabuleiro - d4, d6, d8, d10, d12, d20">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Dado digital 3D para jogos de tabuleiro - d4, d6, d8, d10, d12, d20">
     <meta name="theme-color" content="#1a1a2e">
-    <title>Dice - Dado Digital</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dice">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <title>Dice - Dado Digital 3D</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,6 +18,19 @@
         <header>
             <h1>🎲 Dice</h1>
         </header>
+
+        <div id="installBanner" class="install-banner hidden">
+            <p>Instale o app para acesso rápido!</p>
+            <div class="install-buttons">
+                <button id="installBtn" class="install-btn">Instalar</button>
+                <button id="dismissBtn" class="dismiss-btn">Agora não</button>
+            </div>
+        </div>
+
+        <div id="iosBanner" class="ios-banner hidden">
+            <p>Para instalar: toque em <span class="share-icon">⬆</span> e depois "Adicionar à Tela de Início"</p>
+            <button id="iosCloseBtn" class="dismiss-btn">Entendi</button>
+        </div>
 
         <main>
             <div class="dice-selector">
@@ -25,10 +43,12 @@
             </div>
 
             <div class="dice-area" id="diceArea">
-                <div class="dice" id="dice">
-                    <span class="dice-value" id="diceValue">6</span>
-                </div>
+                <canvas id="diceCanvas"></canvas>
                 <p class="tap-hint">Toque para rolar</p>
+            </div>
+
+            <div class="result-display">
+                <span id="resultValue">-</span>
             </div>
         </main>
 
@@ -37,6 +57,7 @@
         </footer>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
