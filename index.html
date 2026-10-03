@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Dado digital para jogos de tabuleiro - d4, d6, d8, d10, d12, d20">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Dice - Dado Digital</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎲 Dice</h1>
+        </header>
+
+        <main>
+            <div class="dice-selector">
+                <button class="dice-btn selected" data-sides="6">d6</button>
+                <button class="dice-btn" data-sides="4">d4</button>
+                <button class="dice-btn" data-sides="8">d8</button>
+                <button class="dice-btn" data-sides="10">d10</button>
+                <button class="dice-btn" data-sides="12">d12</button>
+                <button class="dice-btn" data-sides="20">d20</button>
+            </div>
+
+            <div class="dice-area" id="diceArea">
+                <div class="dice" id="dice">
+                    <span class="dice-value" id="diceValue">6</span>
+                </div>
+                <p class="tap-hint">Toque para rolar</p>
+            </div>
+        </main>
+
+        <footer>
+            <p>Toque no dado para rolar</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
