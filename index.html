@@ -3,19 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Dado 3D para jogos de tabuleiro: d6, d8, d10, d12 e d20.">
+    <title>Dice — dado 3D para jogos de tabuleiro</title>
+    <meta name="description" content="Role um dado 3D no celular: d6, d8, d12 e d20. Toque para girar e leia o número na face que para de frente.">
+    <meta name="author" content="kayooliveira">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://kayooliveira.github.io/dice/">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="pt_BR">
+    <meta property="og:site_name" content="Dice">
+    <meta property="og:title" content="Dice — dado 3D para jogos de tabuleiro">
+    <meta property="og:description" content="Role um dado 3D no celular: d6, d8, d12 e d20. A face sorteada para de frente para a tela.">
+    <meta property="og:url" content="https://kayooliveira.github.io/dice/">
+    <meta property="og:image" content="https://kayooliveira.github.io/dice/icons/icon-512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Dice — dado 3D para jogos de tabuleiro">
+    <meta name="twitter:description" content="Role um dado 3D no celular: d6, d8, d12 e d20. A face sorteada para de frente para a tela.">
+    <meta name="twitter:image" content="https://kayooliveira.github.io/dice/icons/icon-512.png">
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Dice">
-    <title>Dice</title>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Dice",
+        "url": "https://kayooliveira.github.io/dice/",
+        "description": "Dado 3D para jogos de tabuleiro. Role d6, d8, d12 e d20 no celular.",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Any",
+        "inLanguage": "pt-BR",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "BRL"
+        }
+    }
+    </script>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/app.css?v=8">
+    <link rel="stylesheet" href="css/app.css?v=9">
 </head>
 <body class="bg-slate-950 font-sans text-white antialiased">
     <div class="relative mx-auto flex h-[100dvh] max-w-md flex-col px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))]">
@@ -62,7 +93,6 @@
         <div class="die-picker mb-3" role="radiogroup" aria-label="Tipo de dado">
             <button type="button" role="radio" class="is-selected" data-sides="6" aria-checked="true">D6</button>
             <button type="button" role="radio" data-sides="8" aria-checked="false">D8</button>
-            <button type="button" role="radio" data-sides="10" aria-checked="false">D10</button>
             <button type="button" role="radio" data-sides="12" aria-checked="false">D12</button>
             <button type="button" role="radio" data-sides="20" aria-checked="false">D20</button>
         </div>
@@ -81,6 +111,6 @@
         }
     }
     </script>
-    <script type="module" src="js/app.js?v=8"></script>
+    <script type="module" src="js/app.js?v=9"></script>
 </body>
 </html>

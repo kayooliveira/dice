@@ -1,4 +1,4 @@
-const CACHE = 'dice-v8';
+const CACHE = 'dice-v9';
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();
@@ -13,7 +13,7 @@ self.addEventListener('activate', (event) => {
         const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
         await Promise.all(windows.map((client) => {
             const url = new URL(client.url);
-            url.searchParams.set('v', '8');
+            url.searchParams.set('v', '9');
             return client.navigate(url.href);
         }));
     })());

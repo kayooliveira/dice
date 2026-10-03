@@ -232,62 +232,9 @@ function buildD6() {
     return group;
 }
 
-function buildD10() {
-    const sides = 5;
-    const upper = [];
-    const lower = [];
-    const ring = 1.1;
-    const lift = 0.17;
-    const apex = 1.61;
-    for (let i = 0; i < sides; i += 1) {
-        const angle = (i / sides) * Math.PI * 2 - Math.PI / 2;
-        upper.push(new THREE.Vector3(Math.cos(angle) * ring, lift, Math.sin(angle) * ring));
-    }
-    for (let i = 0; i < sides; i += 1) {
-        const angle = ((i + 0.5) / sides) * Math.PI * 2 - Math.PI / 2;
-        lower.push(new THREE.Vector3(Math.cos(angle) * ring, -lift, Math.sin(angle) * ring));
-    }
-    const top = new THREE.Vector3(0, apex, 0);
-    const bottom = new THREE.Vector3(0, -apex, 0);
-    const kites = [];
-    for (let i = 0; i < sides; i += 1) {
-        kites.push([top, upper[i], lower[i], upper[(i + 1) % sides]]);
-    }
-    for (let i = 0; i < sides; i += 1) {
-        kites.push([bottom, lower[(i + 1) % sides], upper[(i + 1) % sides], lower[i]]);
-    }
-
-    const positions = [];
-    for (const kite of kites) {
-        const [a, b, c, d] = kite;
-        positions.push(...a.toArray(), ...b.toArray(), ...c.toArray());
-        positions.push(...a.toArray(), ...c.toArray(), ...d.toArray());
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geometry.computeVertexNormals();
-
-    const group = new THREE.Group();
-    addBody(group, geometry);
-    const faces = [];
-    kites.forEach((kite, index) => {
-        const center = kite.reduce((sum, point) => sum.add(point.clone()), new THREE.Vector3()).multiplyScalar(0.25);
-        const normal = kite[1].clone().sub(kite[0]).cross(kite[2].clone().sub(kite[0])).normalize();
-        if (normal.dot(center) < 0) normal.negate();
-        let inradius = Infinity;
-        for (let i = 0; i < kite.length; i += 1) {
-            inradius = Math.min(inradius, pointSegmentDistance(center, kite[i], kite[(i + 1) % kite.length]));
-        }
-        addLabel(group, faces, index + 1, center, normal, Math.max(0.28, inradius * 1.15));
-    });
-    group.userData.faces = faces;
-    return group;
-}
-
 export function createDie(sides) {
     let group;
     if (sides === 6) group = buildD6();
-    else if (sides === 10) group = buildD10();
     else if (sides === 8) group = buildPolyhedron(8, new THREE.OctahedronGeometry(1.25));
     else if (sides === 12) group = buildPolyhedron(12, new THREE.DodecahedronGeometry(1.15));
     else if (sides === 20) group = buildPolyhedron(20, new THREE.IcosahedronGeometry(1.2));

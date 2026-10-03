@@ -1,4 +1,4 @@
-import { DiceView } from './dice.js?v=8';
+import { DiceView } from './dice.js?v=9';
 
 const buttons = [...document.querySelectorAll('.die-picker button')];
 const stage = document.getElementById('stage');
