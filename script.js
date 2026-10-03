@@ -1,119 +1,262 @@
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
 (function() {
     'use strict';
 
+    // State
     let currentSides = 4;
     let isRolling = false;
-    let scene, camera, renderer, diceMesh;
-    let animationId;
+    let scene, camera, renderer, dice;
     let rollResult = null;
 
+    // DOM
     const canvas = document.getElementById('diceCanvas');
-    const diceArea = document.getElementById('diceArea');
-    const diceButtons = document.querySelectorAll('.dice-type');
+    const container = document.getElementById('diceContainer');
+    const buttons = document.querySelectorAll('.dice-type');
     const tapHint = document.getElementById('tapHint');
+    const resultDisplay = document.getElementById('resultDisplay');
+    const resultValue = document.getElementById('resultValue');
 
-    function getRandomInt(max) {
-        const array = new Uint32Array(1);
-        crypto.getRandomValues(array);
-        return (array[0] % max) + 1;
+    // Random int [1, max]
+    function randomInt(max) {
+        const arr = new Uint32Array(1);
+        crypto.getRandomValues(arr);
+        return (arr[0] % max) + 1;
     }
 
-    function createTextTexture(text, size = 256) {
-        const canvas = document.createElement('canvas');
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
+    // Create texture with number
+    function makeTexture(num, bg = '#ffffff', fg = '#1e293b') {
+        const size = 256;
+        const c = document.createElement('canvas');
+        c.width = size;
+        c.height = size;
+        const ctx = c.getContext('2d');
         
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = bg;
         ctx.fillRect(0, 0, size, size);
         
-        ctx.fillStyle = '#1e1b4b';
-        ctx.font = `bold ${size * 0.5}px system-ui, -apple-system, sans-serif`;
+        ctx.fillStyle = fg;
+        ctx.font = `bold ${size * 0.55}px Inter, system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(text, size / 2, size / 2);
+        ctx.fillText(String(num), size / 2, size / 2 + 4);
         
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.needsUpdate = true;
-        return texture;
+        const tex = new THREE.CanvasTexture(c);
+        tex.anisotropy = 4;
+        return tex;
     }
 
+    // D4 - Tetrahedron
     function createD4() {
-        const geometry = new THREE.TetrahedronGeometry(1.4);
-        const material = new THREE.MeshPhongMaterial({ 
-            color: 0xffffff,
-            flatShading: true,
-            shininess: 30
+        const group = new THREE.Group();
+        const geo = new THREE.TetrahedronGeometry(1.6);
+        
+        const mat = new THREE.MeshStandardMaterial({
+            color: 0xf1f5f9,
+            roughness: 0.2,
+            metalness: 0.1,
+            flatShading: true
         });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.diceType = 4;
-        return mesh;
+        
+        const mesh = new THREE.Mesh(geo, mat);
+        group.add(mesh);
+        
+        const edges = new THREE.LineSegments(
+            new THREE.EdgesGeometry(geo),
+            new THREE.LineBasicMaterial({ color: 0x7c3aed, linewidth: 2 })
+        );
+        group.add(edges);
+        
+        group.userData.type = 4;
+        group.userData.rotations = {
+            1: { x: -0.34, y: 0, z: 0 },
+            2: { x: 1.91, y: 0, z: 2.09 },
+            3: { x: 1.91, y: 2.09, z: 0 },
+            4: { x: 1.91, y: -2.09, z: 0 }
+        };
+        return group;
     }
 
+    // D6 - Cube with rounded edges
     function createD6() {
-        const geometry = new THREE.BoxGeometry(1.8, 1.8, 1.8);
-        const materials = [];
-        const faceOrder = [3, 4, 2, 5, 1, 6];
+        const group = new THREE.Group();
         
-        for (let i = 0; i < 6; i++) {
-            const texture = createTextTexture(faceOrder[i].toString());
-            materials.push(new THREE.MeshPhongMaterial({ 
-                map: texture,
-                shininess: 30
-            }));
+        let geo;
+        try {
+            geo = new RoundedBoxGeometry(1.7, 1.7, 1.7, 4, 0.15);
+        } catch {
+            geo = new THREE.BoxGeometry(1.7, 1.7, 1.7);
         }
         
-        const mesh = new THREE.Mesh(geometry, materials);
-        mesh.diceType = 6;
-        return mesh;
+        // D6 opposite faces sum to 7: 1-6, 2-5, 3-4
+        // BoxGeometry faces: +x, -x, +y, -y, +z, -z
+        const faceNums = [3, 4, 1, 6, 2, 5];
+        const mats = faceNums.map(n => new THREE.MeshStandardMaterial({
+            map: makeTexture(n),
+            roughness: 0.15,
+            metalness: 0.05
+        }));
+        
+        const mesh = new THREE.Mesh(geo, mats);
+        group.add(mesh);
+        
+        group.userData.type = 6;
+        group.userData.rotations = {
+            1: { x: -Math.PI / 2, y: 0, z: 0 },
+            2: { x: 0, y: 0, z: Math.PI / 2 },
+            3: { x: 0, y: 0, z: 0 },
+            4: { x: Math.PI, y: 0, z: 0 },
+            5: { x: 0, y: 0, z: -Math.PI / 2 },
+            6: { x: Math.PI / 2, y: 0, z: 0 }
+        };
+        return group;
     }
 
+    // D8 - Octahedron
     function createD8() {
-        const geometry = new THREE.OctahedronGeometry(1.4);
-        const material = new THREE.MeshPhongMaterial({ 
-            color: 0xffffff,
-            flatShading: true,
-            shininess: 30
+        const group = new THREE.Group();
+        const geo = new THREE.OctahedronGeometry(1.4);
+        
+        const mat = new THREE.MeshStandardMaterial({
+            color: 0xf1f5f9,
+            roughness: 0.2,
+            metalness: 0.1,
+            flatShading: true
         });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.diceType = 8;
-        return mesh;
+        
+        const mesh = new THREE.Mesh(geo, mat);
+        group.add(mesh);
+        
+        const edges = new THREE.LineSegments(
+            new THREE.EdgesGeometry(geo),
+            new THREE.LineBasicMaterial({ color: 0x0891b2, linewidth: 2 })
+        );
+        group.add(edges);
+        
+        group.userData.type = 8;
+        group.userData.rotations = {
+            1: { x: 0.62, y: 0, z: 0.79 },
+            2: { x: 0.62, y: Math.PI / 2, z: 0.79 },
+            3: { x: 0.62, y: Math.PI, z: 0.79 },
+            4: { x: 0.62, y: -Math.PI / 2, z: 0.79 },
+            5: { x: -0.62, y: 0, z: -0.79 },
+            6: { x: -0.62, y: Math.PI / 2, z: -0.79 },
+            7: { x: -0.62, y: Math.PI, z: -0.79 },
+            8: { x: -0.62, y: -Math.PI / 2, z: -0.79 }
+        };
+        return group;
     }
 
+    // D10 - Pentagonal trapezohedron
     function createD10() {
-        const geometry = new THREE.ConeGeometry(1.2, 2.2, 10);
-        const material = new THREE.MeshPhongMaterial({ 
-            color: 0xffffff,
-            flatShading: true,
-            shininess: 30
+        const group = new THREE.Group();
+        
+        // D10 geometry: 10 kite-shaped faces
+        const geo = new THREE.CylinderGeometry(0, 1.3, 2.2, 10, 1);
+        geo.rotateX(Math.PI);
+        
+        const topGeo = new THREE.CylinderGeometry(0, 1.3, 2.2, 10, 1);
+        
+        const mat = new THREE.MeshStandardMaterial({
+            color: 0xf1f5f9,
+            roughness: 0.2,
+            metalness: 0.1,
+            flatShading: true
         });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.diceType = 10;
-        return mesh;
+        
+        const bottom = new THREE.Mesh(geo, mat);
+        bottom.position.y = -0.3;
+        const top = new THREE.Mesh(topGeo, mat);
+        top.position.y = 0.3;
+        top.rotation.y = Math.PI / 10;
+        
+        group.add(bottom);
+        group.add(top);
+        
+        group.userData.type = 10;
+        group.userData.rotations = {};
+        for (let i = 0; i <= 9; i++) {
+            const angle = (i * Math.PI * 2) / 5;
+            group.userData.rotations[i] = { 
+                x: i < 5 ? 0.5 : -0.5, 
+                y: angle + (i >= 5 ? Math.PI / 5 : 0), 
+                z: 0 
+            };
+        }
+        return group;
     }
 
+    // D12 - Dodecahedron
     function createD12() {
-        const geometry = new THREE.DodecahedronGeometry(1.3);
-        const material = new THREE.MeshPhongMaterial({ 
-            color: 0xffffff,
-            flatShading: true,
-            shininess: 30
+        const group = new THREE.Group();
+        const geo = new THREE.DodecahedronGeometry(1.35);
+        
+        const mat = new THREE.MeshStandardMaterial({
+            color: 0xf1f5f9,
+            roughness: 0.2,
+            metalness: 0.1,
+            flatShading: true
         });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.diceType = 12;
-        return mesh;
+        
+        const mesh = new THREE.Mesh(geo, mat);
+        group.add(mesh);
+        
+        const edges = new THREE.LineSegments(
+            new THREE.EdgesGeometry(geo, 10),
+            new THREE.LineBasicMaterial({ color: 0x059669, linewidth: 2 })
+        );
+        group.add(edges);
+        
+        group.userData.type = 12;
+        group.userData.rotations = {};
+        const phi = (1 + Math.sqrt(5)) / 2;
+        const baseAngle = Math.atan(1 / phi);
+        for (let i = 1; i <= 12; i++) {
+            const ring = Math.floor((i - 1) / 5);
+            const pos = (i - 1) % 5;
+            const yAngle = (pos * 2 * Math.PI) / 5 + (ring === 1 ? Math.PI / 5 : 0);
+            const xAngle = ring === 0 ? -baseAngle : ring === 1 ? baseAngle : Math.PI - baseAngle;
+            group.userData.rotations[i] = { x: xAngle, y: yAngle, z: 0 };
+        }
+        return group;
     }
 
+    // D20 - Icosahedron
     function createD20() {
-        const geometry = new THREE.IcosahedronGeometry(1.4);
-        const material = new THREE.MeshPhongMaterial({ 
-            color: 0xffffff,
-            flatShading: true,
-            shininess: 30
+        const group = new THREE.Group();
+        const geo = new THREE.IcosahedronGeometry(1.45);
+        
+        const mat = new THREE.MeshStandardMaterial({
+            color: 0xf1f5f9,
+            roughness: 0.2,
+            metalness: 0.1,
+            flatShading: true
         });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.diceType = 20;
-        return mesh;
+        
+        const mesh = new THREE.Mesh(geo, mat);
+        group.add(mesh);
+        
+        const edges = new THREE.LineSegments(
+            new THREE.EdgesGeometry(geo),
+            new THREE.LineBasicMaterial({ color: 0x7c3aed, linewidth: 2 })
+        );
+        group.add(edges);
+        
+        group.userData.type = 20;
+        group.userData.rotations = {};
+        for (let i = 1; i <= 20; i++) {
+            const tier = Math.floor((i - 1) / 5);
+            const pos = (i - 1) % 5;
+            const yAngle = (pos * 2 * Math.PI) / 5 + (tier % 2 ? Math.PI / 5 : 0);
+            const xAngles = [0.46, 1.11, Math.PI - 1.11, Math.PI - 0.46];
+            group.userData.rotations[i] = { 
+                x: xAngles[Math.min(tier, 3)], 
+                y: yAngle, 
+                z: 0 
+            };
+        }
+        return group;
     }
 
     function createDice(sides) {
@@ -128,195 +271,189 @@
         }
     }
 
-    const d6FaceRotations = {
-        1: { x: Math.PI / 2, y: 0, z: 0 },
-        2: { x: 0, y: -Math.PI / 2, z: 0 },
-        3: { x: 0, y: 0, z: 0 },
-        4: { x: 0, y: Math.PI, z: 0 },
-        5: { x: 0, y: Math.PI / 2, z: 0 },
-        6: { x: -Math.PI / 2, y: 0, z: 0 }
-    };
-
-    function getFinalRotation(sides, result) {
-        if (sides === 6) {
-            return d6FaceRotations[result];
-        }
-        const angle = ((result - 1) / sides) * Math.PI * 2;
-        return {
-            x: Math.random() * 0.3,
-            y: angle,
-            z: Math.random() * 0.3
-        };
-    }
-
-    function initThree() {
+    // Initialize Three.js
+    function init() {
         scene = new THREE.Scene();
         
-        const aspect = canvas.clientWidth / canvas.clientHeight;
-        camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 1000);
-        camera.position.z = 5;
+        camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+        camera.position.set(0, 0, 7);
         
-        renderer = new THREE.WebGLRenderer({ 
-            canvas: canvas, 
-            antialias: true, 
-            alpha: true 
+        renderer = new THREE.WebGLRenderer({
+            canvas,
+            antialias: true,
+            alpha: true
         });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.setClearColor(0x000000, 0);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
         
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        scene.add(ambientLight);
+        // Lighting
+        const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(ambient);
         
-        const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        mainLight.position.set(3, 5, 4);
-        scene.add(mainLight);
+        const key = new THREE.DirectionalLight(0xffffff, 1.2);
+        key.position.set(5, 8, 6);
+        scene.add(key);
         
-        const fillLight = new THREE.DirectionalLight(0x8b5cf6, 0.3);
-        fillLight.position.set(-3, -2, 2);
-        scene.add(fillLight);
+        const fill = new THREE.DirectionalLight(0xffffff, 0.5);
+        fill.position.set(-5, 3, 4);
+        scene.add(fill);
         
-        diceMesh = createDice(currentSides);
-        scene.add(diceMesh);
+        const rim = new THREE.DirectionalLight(0x8b5cf6, 0.4);
+        rim.position.set(0, -4, -5);
+        scene.add(rim);
         
-        resizeRenderer();
+        dice = createDice(currentSides);
+        scene.add(dice);
+        
+        resize();
         animate();
     }
 
-    function resizeRenderer() {
-        const rect = canvas.parentElement.getBoundingClientRect();
-        const width = rect.width;
-        const height = rect.height;
+    function resize() {
+        const rect = container.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
         
-        if (canvas.width !== width || canvas.height !== height) {
-            renderer.setSize(width, height, false);
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-        }
+        renderer.setSize(w, h);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
     }
 
-    let velocity = { x: 0, y: 0, z: 0 };
-    let targetRotation = null;
-    let idleRotation = 0;
+    // Animation state
+    let vel = { x: 0, y: 0, z: 0 };
+    let target = null;
+    let idle = 0;
 
     function animate() {
-        animationId = requestAnimationFrame(animate);
+        requestAnimationFrame(animate);
         
-        if (isRolling && targetRotation) {
-            const damping = 0.92;
-            const attraction = 0.08;
+        if (isRolling && target) {
+            const damp = 0.88;
+            const pull = 0.12;
             
-            velocity.x = velocity.x * damping + (targetRotation.x - diceMesh.rotation.x) * attraction;
-            velocity.y = velocity.y * damping + (targetRotation.y - diceMesh.rotation.y) * attraction;
-            velocity.z = velocity.z * damping + (targetRotation.z - diceMesh.rotation.z) * attraction;
+            vel.x = vel.x * damp + (target.x - dice.rotation.x) * pull;
+            vel.y = vel.y * damp + (target.y - dice.rotation.y) * pull;
+            vel.z = vel.z * damp + (target.z - dice.rotation.z) * pull;
             
-            diceMesh.rotation.x += velocity.x;
-            diceMesh.rotation.y += velocity.y;
-            diceMesh.rotation.z += velocity.z;
+            dice.rotation.x += vel.x;
+            dice.rotation.y += vel.y;
+            dice.rotation.z += vel.z;
             
-            const totalVelocity = Math.abs(velocity.x) + Math.abs(velocity.y) + Math.abs(velocity.z);
+            const speed = Math.abs(vel.x) + Math.abs(vel.y) + Math.abs(vel.z);
             
-            if (totalVelocity < 0.001) {
-                diceMesh.rotation.x = targetRotation.x;
-                diceMesh.rotation.y = targetRotation.y;
-                diceMesh.rotation.z = targetRotation.z;
+            if (speed < 0.003) {
+                dice.rotation.set(
+                    target.x % (Math.PI * 2),
+                    target.y % (Math.PI * 2),
+                    target.z % (Math.PI * 2)
+                );
                 isRolling = false;
-                targetRotation = null;
+                target = null;
+                idle = dice.rotation.y;
                 
-                if (rollResult !== null && 'vibrate' in navigator) {
-                    navigator.vibrate(30);
-                }
+                // Show result
+                resultValue.textContent = rollResult;
+                resultValue.style.opacity = '1';
+                tapHint.style.opacity = '0';
+                
+                if ('vibrate' in navigator) navigator.vibrate(25);
             }
-        } else if (!isRolling) {
-            idleRotation += 0.003;
-            diceMesh.rotation.y = idleRotation;
+        } else {
+            idle += 0.005;
+            dice.rotation.y = idle;
+            dice.rotation.x = Math.sin(idle * 0.5) * 0.1;
         }
         
-        resizeRenderer();
         renderer.render(scene, camera);
     }
 
     function switchDice(sides) {
-        if (diceMesh) {
-            scene.remove(diceMesh);
-            if (diceMesh.geometry) diceMesh.geometry.dispose();
-            if (diceMesh.material) {
-                if (Array.isArray(diceMesh.material)) {
-                    diceMesh.material.forEach(m => m.dispose());
-                } else {
-                    diceMesh.material.dispose();
+        if (dice) {
+            scene.remove(dice);
+            dice.traverse(child => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) {
+                    const mats = Array.isArray(child.material) ? child.material : [child.material];
+                    mats.forEach(m => {
+                        if (m.map) m.map.dispose();
+                        m.dispose();
+                    });
                 }
-            }
+            });
         }
         
         currentSides = sides;
-        diceMesh = createDice(sides);
-        scene.add(diceMesh);
-        idleRotation = 0;
-        velocity = { x: 0, y: 0, z: 0 };
-        targetRotation = null;
+        dice = createDice(sides);
+        scene.add(dice);
+        
+        idle = 0;
+        vel = { x: 0, y: 0, z: 0 };
+        target = null;
         rollResult = null;
+        
+        resultValue.style.opacity = '0';
+        tapHint.style.opacity = '1';
     }
 
-    function rollDice() {
+    function roll() {
         if (isRolling) return;
         
         isRolling = true;
-        rollResult = getRandomInt(currentSides);
+        rollResult = randomInt(currentSides);
         
-        tapHint.classList.add('opacity-0');
+        resultValue.style.opacity = '0';
         
-        const spins = 3 + Math.random() * 2;
-        const finalRot = getFinalRotation(currentSides, rollResult);
+        const spins = 2 + Math.random() * 2;
+        const final = dice.userData.rotations[rollResult] || { x: 0, y: 0, z: 0 };
         
-        velocity = {
-            x: (Math.random() - 0.5) * 0.8,
-            y: (Math.random() - 0.5) * 0.8,
-            z: (Math.random() - 0.5) * 0.8
+        vel = {
+            x: (Math.random() - 0.5) * 0.5,
+            y: (Math.random() - 0.5) * 0.5,
+            z: (Math.random() - 0.5) * 0.3
         };
         
-        targetRotation = {
-            x: finalRot.x + Math.PI * 2 * spins,
-            y: finalRot.y + Math.PI * 2 * spins,
-            z: finalRot.z
+        const dir = () => Math.random() > 0.5 ? 1 : -1;
+        target = {
+            x: final.x + Math.PI * 2 * spins * dir(),
+            y: final.y + Math.PI * 2 * spins * dir(),
+            z: final.z + Math.PI * 2 * Math.floor(spins / 2) * dir()
         };
-        
-        idleRotation = finalRot.y;
     }
 
     function selectDice(sides) {
-        diceButtons.forEach(btn => {
-            const isSelected = parseInt(btn.dataset.sides) === sides;
-            btn.classList.toggle('active', isSelected);
-            btn.setAttribute('aria-pressed', isSelected);
+        buttons.forEach(btn => {
+            const sel = parseInt(btn.dataset.sides) === sides;
+            btn.classList.toggle('active', sel);
         });
         
         if (currentSides !== sides) {
             switchDice(sides);
-            tapHint.classList.remove('opacity-0');
         }
     }
 
-    diceButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+    // Events
+    buttons.forEach(btn => {
+        btn.addEventListener('click', e => {
             e.stopPropagation();
             selectDice(parseInt(btn.dataset.sides));
         });
     });
 
-    diceArea.addEventListener('click', rollDice);
-
-    document.addEventListener('keydown', (e) => {
+    container.addEventListener('click', roll);
+    
+    document.addEventListener('keydown', e => {
         if (e.code === 'Space' || e.code === 'Enter') {
             e.preventDefault();
-            rollDice();
+            roll();
         }
     });
 
-    window.addEventListener('resize', resizeRenderer);
+    window.addEventListener('resize', resize);
 
-    initThree();
+    // Initialize
+    init();
 
-    // PWA Installation
+    // PWA
     let deferredPrompt;
     const installPrompt = document.getElementById('installPrompt');
     const installBtn = document.getElementById('installBtn');
@@ -324,16 +461,10 @@
     const iosPrompt = document.getElementById('iosPrompt');
     const closeIos = document.getElementById('closeIos');
 
-    function isIOS() {
-        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    }
+    const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
 
-    function isStandalone() {
-        return window.matchMedia('(display-mode: standalone)').matches || 
-               window.navigator.standalone === true;
-    }
-
-    window.addEventListener('beforeinstallprompt', (e) => {
+    window.addEventListener('beforeinstallprompt', e => {
         e.preventDefault();
         deferredPrompt = e;
         if (!localStorage.getItem('installDismissed')) {
@@ -341,33 +472,27 @@
         }
     });
 
-    if (installBtn) {
-        installBtn.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
-            deferredPrompt.prompt();
-            await deferredPrompt.userChoice;
-            deferredPrompt = null;
-            installPrompt.classList.add('hidden');
-        });
-    }
+    installBtn?.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        installPrompt.classList.add('hidden');
+    });
 
-    if (closeInstall) {
-        closeInstall.addEventListener('click', () => {
-            installPrompt.classList.add('hidden');
-            localStorage.setItem('installDismissed', 'true');
-        });
-    }
+    closeInstall?.addEventListener('click', () => {
+        installPrompt.classList.add('hidden');
+        localStorage.setItem('installDismissed', 'true');
+    });
 
     if (isIOS() && !isStandalone() && !localStorage.getItem('iosDismissed')) {
         iosPrompt.classList.remove('hidden');
     }
 
-    if (closeIos) {
-        closeIos.addEventListener('click', () => {
-            iosPrompt.classList.add('hidden');
-            localStorage.setItem('iosDismissed', 'true');
-        });
-    }
+    closeIos?.addEventListener('click', () => {
+        iosPrompt.classList.add('hidden');
+        localStorage.setItem('iosDismissed', 'true');
+    });
 
     window.addEventListener('appinstalled', () => {
         installPrompt.classList.add('hidden');
@@ -376,8 +501,6 @@
 
     // Service Worker
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js').catch(() => {});
-        });
+        navigator.serviceWorker.register('sw.js').catch(() => {});
     }
 })();

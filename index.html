@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Dado digital 3D para jogos de tabuleiro - d4, d6, d8, d10, d12, d20">
+    <meta name="description" content="Dado 3D para jogos de tabuleiro">
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,47 +16,36 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        primary: '#8b5cf6',
-                        surface: '#1e1b4b'
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
                     }
                 }
             }
         }
     </script>
-    <style>
-        html, body { 
-            height: 100dvh;
-            overflow: hidden;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-        #diceCanvas { touch-action: none; }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-slate-950 text-white font-sans antialiased">
-    <div class="h-full flex flex-col max-w-md mx-auto relative">
+<body class="bg-slate-900 text-white font-sans antialiased overscroll-none">
+    <div id="app" class="min-h-[100dvh] flex flex-col">
         
-        <!-- Install Prompt -->
-        <div id="installPrompt" class="hidden absolute top-3 left-3 right-3 z-50 animate-fade-in">
-            <div class="bg-slate-800/90 backdrop-blur rounded-xl px-4 py-3 flex items-center gap-3 shadow-2xl border border-slate-700/50">
-                <svg class="w-8 h-8 text-primary flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="4" y="4" width="16" height="16" rx="2"/>
-                    <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
-                    <circle cx="16" cy="8" r="1.5" fill="currentColor"/>
-                    <circle cx="8" cy="16" r="1.5" fill="currentColor"/>
-                    <circle cx="16" cy="16" r="1.5" fill="currentColor"/>
-                    <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
-                </svg>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium leading-tight">Adicionar à tela inicial</p>
+        <!-- Install Prompt (Android) -->
+        <div id="installPrompt" class="hidden fixed top-4 left-4 right-4 z-50 max-w-sm mx-auto">
+            <div class="bg-slate-800 rounded-2xl p-4 shadow-2xl border border-slate-700 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="4" y="4" width="16" height="16" rx="2"/>
+                        <circle cx="8" cy="8" r="1" fill="currentColor"/>
+                        <circle cx="16" cy="16" r="1" fill="currentColor"/>
+                    </svg>
                 </div>
-                <button id="installBtn" class="px-3 py-1.5 bg-primary hover:bg-primary/80 rounded-lg text-xs font-semibold transition-colors">
+                <p class="flex-1 text-sm">Adicionar à tela inicial</p>
+                <button id="installBtn" class="px-3 py-1.5 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium transition-colors">
                     Instalar
                 </button>
-                <button id="closeInstall" class="p-1.5 -mr-1 text-slate-400 hover:text-white transition-colors" aria-label="Fechar">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <button id="closeInstall" class="p-1 text-slate-400 hover:text-white" aria-label="Fechar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
@@ -64,24 +53,23 @@
         </div>
 
         <!-- iOS Install Hint -->
-        <div id="iosPrompt" class="hidden absolute top-3 left-3 right-3 z-50 animate-fade-in">
-            <div class="bg-slate-800/90 backdrop-blur rounded-xl px-4 py-3 flex items-center gap-3 shadow-2xl border border-slate-700/50">
-                <svg class="w-8 h-8 text-primary flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="4" y="4" width="16" height="16" rx="2"/>
-                    <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
-                    <circle cx="16" cy="16" r="1.5" fill="currentColor"/>
-                </svg>
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs text-slate-300">
-                        Toque em
-                        <svg class="w-4 h-4 inline-block mx-0.5 align-text-bottom" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2l3.5 3.5-1.41 1.41L13 5.83V16h-2V5.83L9.91 6.91 8.5 5.5 12 2zm7 18H5v-2h14v2z"/>
-                        </svg>
-                        e <span class="font-medium text-white">Adicionar à Tela de Início</span>
-                    </p>
+        <div id="iosPrompt" class="hidden fixed top-4 left-4 right-4 z-50 max-w-sm mx-auto">
+            <div class="bg-slate-800 rounded-2xl p-4 shadow-2xl border border-slate-700 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="4" y="4" width="16" height="16" rx="2"/>
+                        <circle cx="12" cy="12" r="1" fill="currentColor"/>
+                    </svg>
                 </div>
-                <button id="closeIos" class="p-1.5 -mr-1 text-slate-400 hover:text-white transition-colors" aria-label="Fechar">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <p class="flex-1 text-xs text-slate-300">
+                    Toque em
+                    <svg class="w-4 h-4 inline align-text-bottom mx-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l3.5 3.5-1.41 1.41L13 5.83V16h-2V5.83L9.91 6.91 8.5 5.5 12 2zm7 18H5v-2h14v2z"/>
+                    </svg>
+                    e <span class="text-white font-medium">Adicionar à Tela de Início</span>
+                </p>
+                <button id="closeIos" class="p-1 text-slate-400 hover:text-white" aria-label="Fechar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
@@ -89,47 +77,44 @@
         </div>
 
         <!-- Header -->
-        <header class="flex items-center justify-center gap-2 px-4 pt-6 pb-4">
-            <svg class="w-7 h-7 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <rect x="3" y="3" width="18" height="18" rx="3"/>
-                <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
-                <circle cx="16" cy="8" r="1.5" fill="currentColor"/>
-                <circle cx="8" cy="16" r="1.5" fill="currentColor"/>
-                <circle cx="16" cy="16" r="1.5" fill="currentColor"/>
-                <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
-            </svg>
-            <h1 class="text-xl font-semibold tracking-tight">Dice</h1>
+        <header class="flex-shrink-0 px-5 pt-6 pb-4">
+            <div class="flex items-center justify-center gap-2">
+                <svg class="w-6 h-6 text-violet-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="3"/>
+                    <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+                    <circle cx="16" cy="8" r="1.5" fill="currentColor"/>
+                    <circle cx="8" cy="16" r="1.5" fill="currentColor"/>
+                    <circle cx="16" cy="16" r="1.5" fill="currentColor"/>
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                </svg>
+                <h1 class="text-xl font-semibold">Dice</h1>
+            </div>
         </header>
 
         <!-- Dice Type Selector -->
-        <nav class="px-4 pb-4" role="group" aria-label="Tipo de dado">
-            <div class="inline-flex w-full bg-slate-900 rounded-xl p-1 border border-slate-800">
-                <button class="dice-type active" data-sides="4" aria-pressed="true">
-                    <span class="label">D4</span>
-                </button>
-                <button class="dice-type" data-sides="6" aria-pressed="false">
-                    <span class="label">D6</span>
-                </button>
-                <button class="dice-type" data-sides="8" aria-pressed="false">
-                    <span class="label">D8</span>
-                </button>
-                <button class="dice-type" data-sides="10" aria-pressed="false">
-                    <span class="label">D10</span>
-                </button>
-                <button class="dice-type" data-sides="12" aria-pressed="false">
-                    <span class="label">D12</span>
-                </button>
-                <button class="dice-type" data-sides="20" aria-pressed="false">
-                    <span class="label">D20</span>
-                </button>
+        <nav class="flex-shrink-0 px-5 pb-5">
+            <div class="bg-slate-800/50 rounded-2xl p-1.5 flex gap-1">
+                <button class="dice-type active" data-sides="4">D4</button>
+                <button class="dice-type" data-sides="6">D6</button>
+                <button class="dice-type" data-sides="8">D8</button>
+                <button class="dice-type" data-sides="10">D10</button>
+                <button class="dice-type" data-sides="12">D12</button>
+                <button class="dice-type" data-sides="20">D20</button>
             </div>
         </nav>
 
-        <!-- 3D Dice Area -->
-        <main class="flex-1 px-4 pb-4 min-h-0">
-            <div id="diceArea" class="h-full flex flex-col items-center justify-center cursor-pointer rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 relative overflow-hidden">
+        <!-- 3D Dice Canvas -->
+        <main class="flex-1 px-5 pb-5 min-h-0">
+            <div id="diceContainer" class="h-full rounded-3xl bg-gradient-to-b from-slate-800/30 to-slate-900/50 border border-slate-700/50 relative overflow-hidden cursor-pointer active:scale-[0.99] transition-transform">
                 <canvas id="diceCanvas" class="w-full h-full"></canvas>
-                <div id="tapHint" class="absolute bottom-5 left-0 right-0 flex items-center justify-center gap-2 text-slate-500 text-sm pointer-events-none">
+                
+                <!-- Result Display -->
+                <div id="resultDisplay" class="absolute bottom-6 left-0 right-0 flex flex-col items-center pointer-events-none">
+                    <div id="resultValue" class="text-6xl font-bold text-white drop-shadow-lg opacity-0 transition-opacity duration-300"></div>
+                </div>
+                
+                <!-- Tap Hint -->
+                <div id="tapHint" class="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-2 text-slate-400 text-sm transition-opacity duration-300">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59"/>
                     </svg>
@@ -140,39 +125,45 @@
     </div>
 
     <style>
-        @keyframes fade-in {
-            from { opacity: 0; transform: translateY(-8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fade-in 0.2s ease-out;
-        }
         .dice-type {
             flex: 1;
-            padding: 0.625rem 0;
-            font-size: 0.8125rem;
+            padding: 0.75rem 0.5rem;
+            font-size: 0.875rem;
             font-weight: 600;
             color: #94a3b8;
             background: transparent;
             border: none;
-            border-radius: 0.625rem;
+            border-radius: 0.75rem;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.2s ease;
         }
         .dice-type:active {
-            transform: scale(0.96);
+            transform: scale(0.95);
         }
         .dice-type.active {
-            background: #8b5cf6;
+            background: #7c3aed;
             color: white;
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 4px 15px -3px rgba(124, 58, 237, 0.5);
         }
-        .dice-type .label {
-            display: block;
+        
+        #diceCanvas {
+            touch-action: none;
+        }
+        
+        @keyframes roll-bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
     </style>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="script.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
