@@ -1,4 +1,4 @@
-import { DiceView } from './dice.js';
+import { DiceView } from './dice.js?v=8';
 
 const buttons = [...document.querySelectorAll('.die-picker button')];
 const stage = document.getElementById('stage');
@@ -99,7 +99,7 @@ window.addEventListener('appinstalled', () => {
 });
 
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
 }
 
 window.__DICE__ = {
