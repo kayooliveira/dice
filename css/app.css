@@ -10,9 +10,18 @@ body {
     user-select: none;
 }
 
+.app-header {
+    padding: 0.35rem 0 0.55rem;
+}
+
+#app.has-install {
+    padding-top: 4.75rem;
+}
+
 .die-picker {
     display: flex;
     gap: 4px;
+    margin-bottom: 0.5rem;
     padding: 4px;
     border-radius: 16px;
     background: rgba(15, 23, 42, 0.85);
@@ -42,6 +51,65 @@ body {
     background: #7c3aed;
     color: #fff;
     box-shadow: 0 6px 16px rgba(124, 58, 237, 0.4);
+}
+
+.die-picker button:disabled {
+    cursor: default;
+}
+
+.hint {
+    padding-bottom: 0.45rem;
+}
+
+.result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    padding: 0 0 0.45rem;
+}
+
+.result-faces {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.result-part {
+    display: grid;
+    place-items: center;
+    min-width: 2.15rem;
+    height: 2.15rem;
+    padding: 0 0.35rem;
+    border-radius: 0.7rem;
+    border: 1px solid rgba(71, 85, 105, 0.85);
+    background: rgba(30, 41, 59, 0.95);
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.result-total {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 3rem;
+    line-height: 1;
+}
+
+#result-sum {
+    font-size: 1.65rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.result-label {
+    margin-top: 0.15rem;
+    color: #c4b5fd;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
 }
 
 .stage {
@@ -74,4 +142,38 @@ body {
 @keyframes chip-in {
     from { opacity: 0; transform: translateY(-8px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-height: 700px) {
+    #app.has-install {
+        padding-top: 4.35rem;
+    }
+
+    .app-header {
+        padding: 0.15rem 0 0.3rem;
+    }
+
+    .die-picker {
+        margin-bottom: 0.35rem;
+        padding: 3px;
+    }
+
+    .die-picker button {
+        min-height: 40px;
+    }
+
+    .hint,
+    .result {
+        padding-bottom: 0.25rem;
+    }
+
+    .result-part {
+        min-width: 1.9rem;
+        height: 1.9rem;
+        font-size: 0.95rem;
+    }
+
+    #result-sum {
+        font-size: 1.4rem;
+    }
 }

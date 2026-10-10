@@ -1,7 +1,7 @@
 {
   "name": "Dice",
   "short_name": "Dice",
-  "description": "Dado 3D para jogos de tabuleiro: d6, d8, d12 e d20",
+  "description": "Dados 3D para jogos de tabuleiro: role até 4 de d6, d8, d12 ou d20",
   "start_url": "/dice/",
   "scope": "/dice/",
   "display": "standalone",

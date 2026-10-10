@@ -293,13 +293,33 @@ function disposeDie(die) {
     });
 }
 
+function slotsFor(count) {
+    if (count === 1) return [{ x: 0, y: 0 }];
+    if (count === 2) return [{ x: -0.5, y: 0 }, { x: 0.5, y: 0 }];
+    if (count === 3) {
+        return [
+            { x: -0.5, y: 0.46 },
+            { x: 0.5, y: 0.46 },
+            { x: 0, y: -0.5 }
+        ];
+    }
+    return [
+        { x: -0.5, y: 0.5 },
+        { x: 0.5, y: 0.5 },
+        { x: -0.5, y: -0.5 },
+        { x: 0.5, y: -0.5 }
+    ];
+}
+
 export class DiceView {
     constructor(canvas) {
         this.canvas = canvas;
         this.sides = 6;
+        this.count = 1;
         this.rolling = false;
-        this.die = null;
-        this.baseQuaternion = new THREE.Quaternion();
+        this.dice = [];
+        this.motions = [];
+        this._resolveRoll = null;
         this._frame = this._frame.bind(this);
 
         this.scene = new THREE.Scene();
@@ -327,7 +347,7 @@ export class DiceView {
         rim.position.set(0, -2, -6);
         this.scene.add(rim);
 
-        this.setSides(6);
+        this._rebuild();
         this._frame();
     }
 
@@ -348,85 +368,138 @@ export class DiceView {
     }
 
     _fit() {
-        if (!this.die) return;
-        const vFov = (this.camera.fov * Math.PI) / 180;
-        const distance = this.camera.position.length();
-        const visibleHeight = 2 * Math.tan(vFov / 2) * distance;
-        const visibleWidth = visibleHeight * this.camera.aspect;
-        const limit = Math.min(visibleWidth, visibleHeight);
-        const diameter = this.die.userData.naturalRadius * 2;
-        const scale = (limit * 0.78) / diameter;
-        this.die.scale.setScalar(scale);
-    }
-
-    setSides(sides) {
-        if (this.die) {
-            this.scene.remove(this.die);
-            disposeDie(this.die);
+        if (!this.dice.length || !this.host) return;
+        const radius = this.dice[0].userData.naturalRadius;
+        const slots = slotsFor(this.dice.length);
+        let minSlot = Infinity;
+        for (let i = 0; i < slots.length; i += 1) {
+            for (let j = i + 1; j < slots.length; j += 1) {
+                minSlot = Math.min(minSlot, Math.hypot(slots[i].x - slots[j].x, slots[i].y - slots[j].y));
+            }
         }
-        this.sides = sides;
-        this.die = createDie(sides);
-        this.scene.add(this.die);
-        const first = this.die.userData.faces.find((face) => face.value === 1) || this.die.userData.faces[0];
-        this.baseQuaternion.copy(quaternionForFace(first));
-        this.die.quaternion.copy(this.baseQuaternion);
-        this.rolling = false;
-        this._fit();
-    }
-
-    getFacing() {
-        return facingValue(this.die);
-    }
-
-    roll(forcedValue = null) {
-        if (this.rolling) return Promise.resolve(this.getFacing().value);
-        const faces = this.die.userData.faces.length;
-        const value = forcedValue == null
-            ? (crypto.getRandomValues(new Uint32Array(1))[0] % faces) + 1
-            : forcedValue;
-        const face = this.die.userData.faces.find((item) => item.value === value);
-        const end = quaternionForFace(face);
-        const start = this.die.quaternion.clone();
-        const axis = new THREE.Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 0.6 + 0.4).normalize();
-        const turns = 2.2 + Math.random() * 1.6;
-        const duration = 1400;
-        const started = performance.now();
-
-        this.rolling = true;
-
-        return new Promise((resolve) => {
-            const step = (now) => {
-                const t = Math.min(1, (now - started) / duration);
-                if (t < 0.68) {
-                    const u = t / 0.68;
-                    const eased = 1 - (1 - u) ** 2;
-                    const spin = new THREE.Quaternion().setFromAxisAngle(axis, eased * turns * Math.PI * 2);
-                    this.die.quaternion.copy(start).multiply(spin);
-                    requestAnimationFrame(step);
-                    return;
-                }
-                if (!this._mid) this._mid = this.die.quaternion.clone();
-                const u = (t - 0.68) / 0.32;
-                const eased = 1 - (1 - u) ** 3;
-                this.die.quaternion.slerpQuaternions(this._mid, end, eased);
-                if (t < 1) {
-                    requestAnimationFrame(step);
-                    return;
-                }
-                this.die.quaternion.copy(end);
-                this.baseQuaternion.copy(end);
-                this._mid = null;
-                this.rolling = false;
-                if (navigator.vibrate) navigator.vibrate(20);
-                resolve(value);
-            };
-            this._mid = null;
-            requestAnimationFrame(step);
+        if (!Number.isFinite(minSlot) || minSlot === 0) minSlot = 1;
+        const maxX = Math.max(...slots.map((slot) => Math.abs(slot.x)));
+        const maxY = Math.max(...slots.map((slot) => Math.abs(slot.y)));
+        const gap = 2.45;
+        const factorX = maxX * gap / minSlot + 1;
+        const factorY = maxY * gap / minSlot + 1;
+        const vFov = (this.camera.fov * Math.PI) / 180;
+        const visibleHeight = 2 * Math.tan(vFov / 2) * this.camera.position.length();
+        const visibleWidth = visibleHeight * this.camera.aspect;
+        const scale = Math.min(
+            (visibleWidth * 0.9) / (2 * radius * factorX),
+            (visibleHeight * 0.9) / (2 * radius * factorY)
+        );
+        const pitch = radius * scale * gap / minSlot;
+        this.dice.forEach((die, index) => {
+            die.scale.setScalar(scale);
+            die.position.set(slots[index].x * pitch, slots[index].y * pitch, 0);
         });
     }
 
-    _frame() {
+    _clearDice() {
+        for (const die of this.dice) {
+            this.scene.remove(die);
+            disposeDie(die);
+        }
+        this.dice = [];
+        this.motions = [];
+    }
+
+    _rebuild() {
+        this.rolling = false;
+        this._resolveRoll = null;
+        this._clearDice();
+        const face = (die) => die.userData.faces.find((item) => item.value === 1) || die.userData.faces[0];
+        for (let index = 0; index < this.count; index += 1) {
+            const die = createDie(this.sides);
+            die.quaternion.copy(quaternionForFace(face(die)));
+            this.scene.add(die);
+            this.dice.push(die);
+        }
+        this._fit();
+    }
+
+    setSides(sides) {
+        if (![6, 8, 12, 20].includes(sides)) return;
+        this.sides = sides;
+        this._rebuild();
+    }
+
+    setCount(count) {
+        if (![1, 2, 3, 4].includes(count)) return;
+        this.count = count;
+        this._rebuild();
+    }
+
+    getFacing() {
+        return this.dice.map((die) => facingValue(die));
+    }
+
+    roll(forcedValues = null) {
+        if (this.rolling) return Promise.resolve(this.getFacing().map((face) => face.value));
+        const faceCount = this.dice[0].userData.faces.length;
+        const values = this.dice.map((_, index) => {
+            if (Array.isArray(forcedValues) && Number.isInteger(forcedValues[index])) {
+                return forcedValues[index];
+            }
+            const sample = new Uint32Array(1);
+            crypto.getRandomValues(sample);
+            return (sample[0] % faceCount) + 1;
+        });
+
+        this.motions = this.dice.map((die, index) => {
+            const face = die.userData.faces.find((item) => item.value === values[index]);
+            return {
+                die,
+                start: die.quaternion.clone(),
+                end: quaternionForFace(face),
+                axis: new THREE.Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 0.6 + 0.4).normalize(),
+                turns: 2.2 + Math.random() * 1.4,
+                mid: null,
+                started: performance.now()
+            };
+        });
+        this.rolling = true;
+        return new Promise((resolve) => {
+            this._resolveRoll = resolve;
+        });
+    }
+
+    _finishRoll() {
+        const values = [];
+        for (const motion of this.motions) {
+            motion.die.quaternion.copy(motion.end);
+            const facing = facingValue(motion.die);
+            values.push(facing.value);
+        }
+        this.motions = [];
+        this.rolling = false;
+        if (navigator.vibrate) navigator.vibrate(20);
+        const resolve = this._resolveRoll;
+        this._resolveRoll = null;
+        if (resolve) resolve(values);
+    }
+
+    _frame(now) {
         requestAnimationFrame(this._frame);
+        if (this.rolling) {
+            let done = true;
+            for (const motion of this.motions) {
+                const t = Math.min(1, ((now || performance.now()) - motion.started) / 1400);
+                if (t < 1) done = false;
+                if (t < 0.68) {
+                    const eased = 1 - (1 - t / 0.68) ** 2;
+                    const spin = new THREE.Quaternion().setFromAxisAngle(motion.axis, eased * motion.turns * Math.PI * 2);
+                    motion.die.quaternion.copy(motion.start).multiply(spin);
+                } else {
+                    if (!motion.mid) motion.mid = motion.die.quaternion.clone();
+                    const eased = t >= 1 ? 1 : 1 - (1 - (t - 0.68) / 0.32) ** 3;
+                    motion.die.quaternion.slerpQuaternions(motion.mid, motion.end, eased);
+                }
+            }
+            if (done) this._finishRoll();
+        }
         this.renderer.render(this.scene, this.camera);
     }
 }
